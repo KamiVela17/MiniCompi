@@ -4,6 +4,9 @@ import ply.yacc as yacc
 from lexico import tokens, lexer
 from semantico import *
 
+symbol_table = {}  # Tabla de símbolos para guardar contextos de las variables y funciones
+error_table = []   # Tabla de errores para registrar los errores encontrados durante el análisis
+
 # Precedencia de operadores (si es necesaria)
 precedence = (
     ('left', 'EQ', 'DIST'),
@@ -16,7 +19,7 @@ precedence = (
 def p_program(p):
     'program : PRINCIPAL ID LLAVE_ABRE cuerpo LLAVE_CIERRA'
     p[0] = Program(p[1], p[2], p[4])
-
+    symbol_table[p[2]] = {'type': 'program', 'line': p.lineno(2)}
 
 def p_cuerpo(p):
     '''cuerpo : declaracion cuerpo2
@@ -45,6 +48,8 @@ def p_cuerpo2(p):
 def p_declaracion(p):
     'declaracion : tipod asig'
     p[0] = Declaration(p[1], p[2])
+    symbol_table[p[2].children[0].leaf] = {'type': p[1], 'line': p.lineno(1)}
+
 
 def p_tipod(p):
     '''tipod : INTEGER
@@ -59,6 +64,13 @@ def p_println(p):
 def p_asig(p):
     'asig : ID tipoasig masasig TOKEN_ASIG'
     p[0] = Assignment(Identifier(p[1]), p[2], p[3])
+    # Agregar o actualizar la información de la variable en la tabla de símbolos
+    if p[1] in symbol_table:
+        symbol_table[p[1]]['last_assigned'] = p.lineno(1)
+    else:
+        symbol_table[p[1]] = {'type': 'unknown', 'line': p.lineno(1), 'declared': False}
+        error_table.append({'line': p.lineno(1), 'error': 'Variable "{}" not declared.'.format(p[1])})
+
 
 def p_tipoasig(p):
     '''tipoasig : IGUAL idnum
@@ -95,6 +107,15 @@ def p_masasig(p):
 def p_para(p):
     'para : CIC_FOR PAREN_ABRE condicionpara PAREN_CIERRA LLAVE_ABRE cuerpo LLAVE_CIERRA'
     p[0] = ForLoop(p[3], p[6])
+    # Registrar la línea de inicio del bucle for en la tabla de símbolos para análisis de flujo de control
+    symbol_table['for_loop_at_line_{}'.format(p.lineno(1))] = {'line': p.lineno(1)}
+
+def p_sif(p):
+    'sif : COND_IF PAREN_ABRE condicion PAREN_CIERRA COND_THEN LLAVE_ABRE cuerpo LLAVE_CIERRA'
+    p[0] = IfStatement(p[3], p[7])
+    # Registrar la línea de inicio de la sentencia if
+    symbol_table['if_statement_at_line_{}'.format(p.lineno(1))] = {'line': p.lineno(1)}
+
 
 def p_condicionpara(p):
     'condicionpara : inicio TOKEN_ASIG fin TOKEN_ASIG indec'
@@ -117,6 +138,8 @@ def p_indec(p):
 def p_sif(p):
     'sif : COND_IF PAREN_ABRE condicion PAREN_CIERRA COND_THEN LLAVE_ABRE cuerpo LLAVE_CIERRA'
     p[0] = IfStatement(p[3], p[7])
+    # Registrar la línea de inicio de la sentencia if
+    symbol_table['if_statement_at_line_{}'.format(p.lineno(1))] = {'line': p.lineno(1)}
 
 def p_dhacer(p):
     'dhacer : CIC_DO LLAVE_ABRE cuerpo LLAVE_CIERRA CIC_WHILE PAREN_ABRE condicion PAREN_CIERRA'
@@ -161,9 +184,12 @@ def p_empty(p):
 # Manejo de errores
 def p_error(p):
     if p:
-        print("Syntax error at '%s'" % p.value)
+        error = "Syntax error at token '%s' on line %d" % (p.value, p.lineno)
+        print(error)
+        error_table.append({'line': p.lineno, 'error': error})
     else:
         print("Syntax error at EOF")
+
 
 # Construir el parser
 parser = yacc.yacc()
@@ -182,6 +208,12 @@ def print_ast(node, indent=0):
 
 def analizar_y_traducir(source_code):
     result = parser.parse(source_code, lexer=lexer)
-    print("--------------Arbol de analisis sintactico--------------")
+    print("--------------Árbol de Análisis Sintáctico--------------")
     print(print_ast(result))
+    print("\n--------------Tabla de Símbolos--------------")
+    for symbol, info in symbol_table.items():
+        print("{}: {}".format(symbol, info))
+    print("\n--------------Tabla de Errores--------------")
+    for error in error_table:
+        print (error)
 
