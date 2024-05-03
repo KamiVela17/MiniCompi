@@ -1,0 +1,10 @@
+reyna valorant{
+    vandal x;
+    x=10;
+    vandal y;
+    y=50;
+    omen(x > 1) brimstone
+    {
+         heal x;
+    }
+}
