@@ -1,10 +1,9 @@
-reyna valorant{
-    vandal x;
-    x=10;
-    vandal y;
-    y=50;
-    omen(x > 1) brimstone
-    {
-         heal x;
+brimstone main {
+    emp a = 10;
+    emp b = 50;
+    
+    cypher(a > 1) jett {
+        heal a;
     }
+    
 }

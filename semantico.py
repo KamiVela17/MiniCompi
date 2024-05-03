@@ -1,135 +1,82 @@
 # -*- coding: utf-8 -*-
 class Node(object):
-    """ Base class for AST nodes """
-    def accept(self, visitor):
-        return visitor.visit(self)
+    """Base class for all AST nodes."""
+    def __init__(self, type, children=None, leaf=None):
+        self.type = type
+        self.children = children if children is not None else []
+        self.leaf = leaf
 
 class Program(Node):
-    def __init__(self, id, body):
-        self.id = id
-        self.body = body
-
-class Body(Node):
-    def __init__(self, statements):
-        self.statements = statements
-
-class Declaration(Node):
-    def __init__(self, type, assignment):
-        self.type = type
-        self.assignment = assignment
-
-class Assignment(Node):
-    def __init__(self, id, expression):
-        self.id = id
-        self.expression = expression
-
-class Println(Node):
-    def __init__(self, expression):
-        self.expression = expression
-
-class ForLoop(Node):
-    def __init__(self, condition, body):
-        self.condition = condition
-        self.body = body
-
-class IfStatement(Node):
-    def __init__(self, condition, then_body, else_body=None):
-        self.condition = condition
-        self.then_body = then_body
-        self.else_body = else_body
-
-class DoWhileLoop(Node):
-    def __init__(self, body, condition):
-        self.body = body
-        self.condition = condition
-
-class BinaryOperation(Node):
-    def __init__(self, operator, left, right):
-        self.operator = operator
-        self.left = left
-        self.right = right
-
-class Condition(Node):
-    def __init__(self, left, operator, right):
-        self.left = left
-        self.operator = operator
-        self.right = right
-
-class Literal(Node):
-    def __init__(self, value):
-        self.value = value
-
-class Identifier(Node):
-    def __init__(self, name):
+    """Represents the whole program."""
+    def __init__(self, principal, name, body):
+        super(Program, self).__init__('Program', [body])
+        self.principal = principal
         self.name = name
 
-class SemanticAnalyzer(object):
-    def __init__(self):
-        self.errors = []
+class Body(Node):
+    """Represents a body of statements."""
+    def __init__(self, components=None):
+        super(Body, self).__init__('Body', components if components else [])
 
-    def visit(self, node):
-        """ Dispatch method to visit a node. """
-        method_name = 'visit_' + type(node).__name__
-        visitor = getattr(self, method_name, self.generic_visit)
-        return visitor(node)
+class Declaration(Node):
+    """Represents a declaration of a variable."""
+    def __init__(self, type, assignment):
+        super(Declaration, self).__init__('Declaration', [assignment], type)
 
-    def generic_visit(self, node):
-        """ Called if no explicit visitor function exists for a node. """
-        if hasattr(node, 'statements'):
-            for stmt in node.statements:
-                self.visit(stmt)
-        elif hasattr(node, 'expression'):
-            self.visit(node.expression)
-        elif hasattr(node, 'condition'):
-            self.visit(node.condition)
-        elif hasattr(node, 'body'):
-            self.visit(node.body)
+class Assignment(Node):
+    """Represents an assignment statement with an additional segment."""
+    def __init__(self, identifier, expression, additional):
+        super(Assignment, self).__init__('Assignment', [identifier, expression, additional])
 
-    def visit_Program(self, node):
-        if node.body:
-            self.visit(node.body)
+class Println(Node):
+    """Represents a print statement."""
+    def __init__(self, expression):
+        super(Println, self).__init__('Println', [expression])
 
-    def visit_Body(self, node):
-        for stmt in node.statements:
-            self.visit(stmt)
+class ForLoop(Node):
+    """Represents a for loop."""
+    def __init__(self, condition, body):
+        super(ForLoop, self).__init__('ForLoop', [condition, body])
 
-    def visit_Declaration(self, node):
-        self.visit(node.assignment)
+class IfStatement(Node):
+    """Represents an if statement."""
+    def __init__(self, condition, true_branch, false_branch=None):
+        children = [condition, true_branch]
+        if false_branch:
+            children.append(false_branch)
+        super(IfStatement, self).__init__('IfStatement', children)
 
-    def visit_Assignment(self, node):
-        self.visit(node.expression)
+class DoWhileLoop(Node):
+    """Represents a do-while loop."""
+    def __init__(self, body, condition):
+        super(DoWhileLoop, self).__init__('DoWhileLoop', [body, condition])
 
-    def visit_Println(self, node):
-        self.visit(node.expression)
+class BinaryOperation(Node):
+    """Represents a binary operation."""
+    def __init__(self, operator, left, right):
+        super(BinaryOperation, self).__init__('BinaryOperation', [left, right], operator)
 
-    def visit_ForLoop(self, node):
-        self.visit(node.condition)
-        self.visit(node.body)
+class UnaryOperation(Node):
+    """Represents a unary operation."""
+    def __init__(self, operator, operand):
+        super(UnaryOperation, self).__init__('UnaryOperation', [operand], operator)
 
-    def visit_IfStatement(self, node):
-        self.visit(node.condition)
-        self.visit(node.then_body)
-        if node.else_body:
-            self.visit(node.else_body)
+class Literal(Node):
+    """Represents a literal value."""
+    def __init__(self, value):
+        super(Literal, self).__init__('Literal', leaf=value)
 
-    def visit_DoWhileLoop(self, node):
-        self.visit(node.body)
-        self.visit(node.condition)
+class Identifier(Node):
+    """Represents an identifier."""
+    def __init__(self, name):
+        super(Identifier, self).__init__('Identifier', leaf=name)
 
-    def visit_BinaryOperation(self, node):
-        self.visit(node.left)
-        self.visit(node.right)
+class Condition(Node):
+    """Represents a condition in loops and if statements."""
+    def __init__(self, expression):
+        super(Condition, self).__init__('Condition', [expression])
 
-    def visit_Condition(self, node):
-        self.visit(node.left)
-        self.visit(node.right)
-
-    def visit_Literal(self, node):
-        pass
-
-    def visit_Identifier(self, node):
-        pass
-
-    def report_errors(self):
-        for error in self.errors:
-            print("Semantic error:", error)
+class ListNode(Node):
+    """Node to handle lists of items in the AST."""
+    def __init__(self, items):
+        super(ListNode, self).__init__('ListNode', items)
