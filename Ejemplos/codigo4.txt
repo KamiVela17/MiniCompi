@@ -1,0 +1,7 @@
+brimstone main {
+    emp a = 10;
+    emp b = 50;
+    cypher(a > 1) jett {
+        heal a;
+    }
+}

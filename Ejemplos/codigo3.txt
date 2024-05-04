@@ -1,0 +1,6 @@
+brimstone Kami{
+emp x=1;
+emp y=2;
+x=y;
+heal x;
+}

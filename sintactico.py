@@ -32,7 +32,6 @@ def p_cuerpo(p):
               | empty'''
     if len(p) == 3:
         if p[2]:
-            # Accede a 'children' en lugar de 'components'
             p[0] = Body([p[1]] + p[2].children)
         else:
             p[0] = Body([p[1]])
@@ -64,7 +63,6 @@ def p_println(p):
 def p_asig(p):
     'asig : ID tipoasig masasig TOKEN_ASIG'
     p[0] = Assignment(Identifier(p[1]), p[2], p[3])
-    # Agregar o actualizar la información de la variable en la tabla de símbolos
     if p[1] in symbol_table:
         symbol_table[p[1]]['last_assigned'] = p.lineno(1)
     else:
@@ -83,10 +81,10 @@ def p_tipoasig(p):
 def p_idnum(p):
     '''idnum : num
              | ID'''
-    if isinstance(p[1], str):  # Suponiendo que 'ID' y 'num' devuelven una cadena
-        p[0] = Identifier(p[1])  # Asegúrate de que Identifier es una clase que hereda de Node
+    if isinstance(p[1], str):  
+        p[0] = Identifier(p[1])  
     else:
-        p[0] = p[1]  # Si ya es un nodo
+        p[0] = p[1]  
 
 def p_num(p):
     '''num : NUM_INTEGER
@@ -98,7 +96,6 @@ def p_masasig(p):
                | oparit idnum masasig
                | empty'''
     if len(p) == 4:
-        # Encapsulate items in a ListNode if not empty
         items = [p[2]] + (p[3] if p[3] else [])
         p[0] = ListNode(items) if items else ListNode([])
     else:
@@ -208,7 +205,7 @@ def print_ast(node, indent=0):
 
 def analizar_y_traducir(source_code):
     result = parser.parse(source_code, lexer=lexer)
-    print("--------------Árbol de Análisis Sintáctico--------------")
+    print("--------------Arbol de Analisis Sintactico--------------")
     print(print_ast(result))
     print("\n--------------Tabla de Símbolos--------------")
     for symbol, info in symbol_table.items():

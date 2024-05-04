@@ -1,0 +1,8 @@
+brimstone valorant{
+emp x=10;
+emp y=5000;
+
+x=y;
+
+heal x;
+}
